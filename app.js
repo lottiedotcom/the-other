@@ -3,8 +3,9 @@ window.onload = function() {
     loadHistory();
     loadWights();
     loadLedger();
+    loadOaths();
     checkBalance();
-    initCanvas();
+    populateWightSuggestions();
 };
 
 // --- TAB SWITCHING ---
@@ -21,7 +22,7 @@ function switchTab(sectionId) {
 }
 
 // ==========================================
-// 1. THE WELL (Complex Divination)
+// 1. THE WELL (Divination)
 // ==========================================
 const castBtn = document.getElementById('cast-btn');
 let currentCast = [];
@@ -40,10 +41,7 @@ function startCast(e) {
     castBtn.classList.add('casting');
     castBtn.innerText = "FOCUS...";
     if (navigator.vibrate) navigator.vibrate(50);
-    
-    castTimer = setTimeout(() => {
-        if(isCasting) performCast();
-    }, 1500);
+    castTimer = setTimeout(() => { if(isCasting) performCast(); }, 1500);
 }
 
 function endCast() {
@@ -70,7 +68,6 @@ function performCast() {
     for (let i = 0; i < spreadType; i++) {
         let r = runesData[Math.floor(Math.random() * runesData.length)];
         let rev = allowRev && Math.random() > 0.5;
-        
         currentCast.push({ rune: r, reversed: rev });
 
         let card = document.createElement('div');
@@ -122,8 +119,7 @@ function loadHistory() {
 
 function filterHistory() {
     const term = document.getElementById('search-bar').value.toLowerCase();
-    const items = document.querySelectorAll('.history-item');
-    items.forEach(item => {
+    document.querySelectorAll('.history-item').forEach(item => {
         item.style.display = item.innerText.toLowerCase().includes(term) ? 'block' : 'none';
     });
 }
@@ -135,25 +131,13 @@ function toggleForm(id) {
     document.getElementById(id).classList.toggle('hidden-form');
 }
 
-// --- NEW SLIDER FUNCTION ---
 function updateStandingLabel(val) {
     const label = document.getElementById('standing-text');
-    if (val < 25) {
-        label.innerText = "Hostile";
-        label.style.color = "#ef4444"; 
-    } else if (val < 45) {
-        label.innerText = "Wary";
-        label.style.color = "#fbbf24"; 
-    } else if (val < 65) {
-        label.innerText = "Neutral";
-        label.style.color = "#38bdf8"; 
-    } else if (val < 85) {
-        label.innerText = "Friendly";
-        label.style.color = "#4ade80"; 
-    } else {
-        label.innerText = "Ally";
-        label.style.color = "#22c55e"; 
-    }
+    if (val < 25) { label.innerText = "Hostile"; label.style.color = "#ef4444"; }
+    else if (val < 45) { label.innerText = "Wary"; label.style.color = "#fbbf24"; }
+    else if (val < 65) { label.innerText = "Neutral"; label.style.color = "#38bdf8"; }
+    else if (val < 85) { label.innerText = "Friendly"; label.style.color = "#4ade80"; }
+    else { label.innerText = "Ally"; label.style.color = "#22c55e"; }
 }
 
 function saveWight() {
@@ -176,6 +160,7 @@ function saveWight() {
     
     toggleForm('wight-form');
     loadWights();
+    populateWightSuggestions(); // Refresh autocomplete
 }
 
 function loadWights() {
@@ -194,11 +179,18 @@ function loadWights() {
     `}).join('');
 }
 
+function populateWightSuggestions() {
+    const wights = JSON.parse(localStorage.getItem('myWights')) || [];
+    const datalist = document.getElementById('wight-suggestions');
+    datalist.innerHTML = wights.map(w => `<option value="${w.name}">`).join('');
+}
+
 // ==========================================
-// 3. THE LEDGER (Reciprocity)
+// 3. THE LEDGER (Offering Log)
 // ==========================================
 function logOffering(type) {
-    const entry = { date: new Date().toLocaleString(), type: type };
+    const target = document.getElementById('offering-target').value || "Unknown";
+    const entry = { date: new Date().toLocaleString(), type: type, target: target };
     saveLedgerEntry(entry);
 }
 
@@ -212,6 +204,10 @@ function saveLedgerEntry(entry) {
     ledger.unshift(entry);
     localStorage.setItem('myLedger', JSON.stringify(ledger));
     localStorage.setItem('lastOffering', Date.now());
+    
+    // Clear custom input but KEEP the target input (often you give multiple things to same entity)
+    document.getElementById('custom-offering').value = '';
+    
     loadLedger();
     checkBalance();
 }
@@ -219,9 +215,10 @@ function saveLedgerEntry(entry) {
 function loadLedger() {
     const list = document.getElementById('ledger-list');
     const ledger = JSON.parse(localStorage.getItem('myLedger')) || [];
-    list.innerHTML = ledger.slice(0, 10).map(l => `
+    list.innerHTML = ledger.slice(0, 15).map(l => `
         <div class="ledger-item">
-            <span>Given: <strong>${l.type}</strong></span><br>
+            <span style="color:#94a3b8; font-size:0.8rem;">To: ${l.target || 'Unknown'}</span><br>
+            Given: <strong>${l.type}</strong><br>
             <small>${l.date}</small>
         </div>
     `).join('');
@@ -231,10 +228,7 @@ function checkBalance() {
     const last = localStorage.getItem('lastOffering');
     const statusEl = document.getElementById('balance-status');
     
-    if(!last) {
-        statusEl.innerText = "No offerings recorded.";
-        return;
-    }
+    if(!last) { statusEl.innerText = "No offerings recorded."; return; }
 
     const diff = Date.now() - parseInt(last);
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -251,99 +245,57 @@ function checkBalance() {
 }
 
 // ==========================================
-// 4. BINDRUNE CANVAS (FIXED)
+// 4. THE OATH RING (New Module)
 // ==========================================
-let canvas, ctx;
-let isDrawing = false;
+function saveOath() {
+    const text = document.getElementById('oath-text').value;
+    const witness = document.getElementById('oath-witness').value;
+    if(!text) return;
 
-function initCanvas() {
-    canvas = document.getElementById('rune-canvas');
-    ctx = canvas.getContext('2d');
+    const oath = {
+        id: Date.now(),
+        text: text,
+        witness: witness || "The Void",
+        status: "active"
+    };
+
+    let oaths = JSON.parse(localStorage.getItem('myOaths')) || [];
+    oaths.push(oath);
+    localStorage.setItem('myOaths', JSON.stringify(oaths));
+
+    document.getElementById('oath-text').value = '';
+    document.getElementById('oath-witness').value = '';
+    loadOaths();
+}
+
+function loadOaths() {
+    const list = document.getElementById('oath-list');
+    let oaths = JSON.parse(localStorage.getItem('myOaths')) || [];
     
-    // Resize immediately and on window change
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    // Show active oaths first
+    oaths.sort((a,b) => (a.status === 'active' ? -1 : 1));
+
+    list.innerHTML = oaths.map(o => {
+        if(o.status === 'fulfilled') return ''; // Optional: Don't show fulfilled oaths to keep list clean
+        
+        return `
+        <div class="oath-card">
+            <button class="fulfill-btn" onclick="fulfillOath(${o.id})">✔ Fulfill</button>
+            <span class="oath-witness">Witness: ${o.witness}</span>
+            <span class="oath-text">"${o.text}"</span>
+        </div>
+    `}).join('');
+}
+
+function fulfillOath(id) {
+    if(!confirm("Have you truly fulfilled this oath?")) return;
     
-    // Default Style
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    // EVENT LISTENERS
-    // Mouse
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDraw);
-    canvas.addEventListener('mouseout', stopDraw);
-
-    // Touch (Mobile)
-    canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Stop scrolling
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent("mousedown", {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    });
-
-    canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent("mousemove", {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    });
-
-    canvas.addEventListener('touchend', () => {
-        const mouseEvent = new MouseEvent("mouseup", {});
-        canvas.dispatchEvent(mouseEvent);
-    });
-}
-
-function resizeCanvas() {
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-}
-
-function startDraw(e) {
-    isDrawing = true;
-    draw(e); 
-}
-
-function stopDraw() {
-    isDrawing = false;
-    ctx.beginPath(); 
-}
-
-function draw(e) {
-    if (!isDrawing) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-}
-
-function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-function saveCanvas() {
-    const link = document.createElement('a');
-    link.download = `bindrune_${Date.now()}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
+    let oaths = JSON.parse(localStorage.getItem('myOaths')) || [];
+    const index = oaths.findIndex(o => o.id === id);
+    if(index > -1) {
+        oaths[index].status = 'fulfilled';
+        localStorage.setItem('myOaths', JSON.stringify(oaths));
+        loadOaths();
+    }
 }
 
