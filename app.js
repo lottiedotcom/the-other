@@ -24,7 +24,7 @@ function switchTab(sectionId) {
 // 1. THE WELL (Complex Divination)
 // ==========================================
 const castBtn = document.getElementById('cast-btn');
-let currentCast = []; // Stores the current temporary cast
+let currentCast = [];
 
 castBtn.addEventListener('mousedown', startCast);
 castBtn.addEventListener('touchstart', startCast);
@@ -62,19 +62,17 @@ function performCast() {
     const allowRev = document.getElementById('reversal-toggle').checked;
     const resultsDiv = document.getElementById('cast-results');
     
-    currentCast = []; // Reset
+    currentCast = [];
     resultsDiv.innerHTML = '';
     resultsDiv.classList.remove('hidden');
     document.getElementById('save-area').classList.remove('hidden');
 
-    // Generate Runes
     for (let i = 0; i < spreadType; i++) {
         let r = runesData[Math.floor(Math.random() * runesData.length)];
         let rev = allowRev && Math.random() > 0.5;
         
         currentCast.push({ rune: r, reversed: rev });
 
-        // Create UI Card
         let card = document.createElement('div');
         card.className = 'rune-result-card';
         card.innerHTML = `
@@ -103,7 +101,6 @@ function saveCast() {
     history.unshift(entry);
     localStorage.setItem('runeHistory', JSON.stringify(history));
     
-    // Reset UI
     document.getElementById('query-input').value = '';
     document.getElementById('cast-notes').value = '';
     document.getElementById('cast-results').classList.add('hidden');
@@ -136,6 +133,27 @@ function filterHistory() {
 // ==========================================
 function toggleForm(id) {
     document.getElementById(id).classList.toggle('hidden-form');
+}
+
+// --- NEW SLIDER FUNCTION ---
+function updateStandingLabel(val) {
+    const label = document.getElementById('standing-text');
+    if (val < 25) {
+        label.innerText = "Hostile";
+        label.style.color = "#ef4444"; 
+    } else if (val < 45) {
+        label.innerText = "Wary";
+        label.style.color = "#fbbf24"; 
+    } else if (val < 65) {
+        label.innerText = "Neutral";
+        label.style.color = "#38bdf8"; 
+    } else if (val < 85) {
+        label.innerText = "Friendly";
+        label.style.color = "#4ade80"; 
+    } else {
+        label.innerText = "Ally";
+        label.style.color = "#22c55e"; 
+    }
 }
 
 function saveWight() {
@@ -177,7 +195,7 @@ function loadWights() {
 }
 
 // ==========================================
-// 3. THE LEDGER (Reciprocity & Dimming)
+// 3. THE LEDGER (Reciprocity)
 // ==========================================
 function logOffering(type) {
     const entry = { date: new Date().toLocaleString(), type: type };
@@ -193,9 +211,9 @@ function saveLedgerEntry(entry) {
     let ledger = JSON.parse(localStorage.getItem('myLedger')) || [];
     ledger.unshift(entry);
     localStorage.setItem('myLedger', JSON.stringify(ledger));
-    localStorage.setItem('lastOffering', Date.now()); // Update timestamp
+    localStorage.setItem('lastOffering', Date.now());
     loadLedger();
-    checkBalance(); // Refresh screen brightness
+    checkBalance();
 }
 
 function loadLedger() {
@@ -212,7 +230,6 @@ function loadLedger() {
 function checkBalance() {
     const last = localStorage.getItem('lastOffering');
     const statusEl = document.getElementById('balance-status');
-    const main = document.getElementById('main-world');
     
     if(!last) {
         statusEl.innerText = "No offerings recorded.";
@@ -234,49 +251,85 @@ function checkBalance() {
 }
 
 // ==========================================
-// 4. BINDRUNE CANVAS
+// 4. BINDRUNE CANVAS (FIXED)
 // ==========================================
-let canvas, ctx, painting = false;
+let canvas, ctx;
+let isDrawing = false;
 
 function initCanvas() {
     canvas = document.getElementById('rune-canvas');
     ctx = canvas.getContext('2d');
     
-    // Fix resolution for phones
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    // Resize immediately and on window change
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
     
+    // Default Style
+    ctx.strokeStyle = '#000000';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'black'; // Drawing on white canvas
+    ctx.lineJoin = 'round';
 
-    // Events
+    // EVENT LISTENERS
+    // Mouse
     canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mouseup', endDraw);
     canvas.addEventListener('mousemove', draw);
-    
-    canvas.addEventListener('touchstart', (e) => startDraw(e.touches[0]));
-    canvas.addEventListener('touchend', endDraw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseout', stopDraw);
+
+    // Touch (Mobile)
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Stop scrolling
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent("mousedown", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    });
+
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
-        draw(e.touches[0]);
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent("mousemove", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    });
+
+    canvas.addEventListener('touchend', () => {
+        const mouseEvent = new MouseEvent("mouseup", {});
+        canvas.dispatchEvent(mouseEvent);
     });
 }
 
+function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+}
+
 function startDraw(e) {
-    painting = true;
-    draw(e);
+    isDrawing = true;
+    draw(e); 
 }
-function endDraw() {
-    painting = false;
-    ctx.beginPath();
+
+function stopDraw() {
+    isDrawing = false;
+    ctx.beginPath(); 
 }
+
 function draw(e) {
-    if(!painting) return;
+    if (!isDrawing) return;
+
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     ctx.lineTo(x, y);
     ctx.stroke();
     ctx.beginPath();
@@ -289,7 +342,7 @@ function clearCanvas() {
 
 function saveCanvas() {
     const link = document.createElement('a');
-    link.download = 'bindrune.png';
+    link.download = `bindrune_${Date.now()}.png`;
     link.href = canvas.toDataURL();
     link.click();
 }
