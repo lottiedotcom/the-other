@@ -13,10 +13,7 @@
     <main id="main-world">
         
         <section id="well-section" class="active-section">
-            <header>
-                <h1>The Well</h1>
-            </header>
-
+            <header><h1>The Well</h1></header>
             <div class="well-controls">
                 <input type="text" id="query-input" placeholder="What do you seek?" autocomplete="off">
                 <div class="row">
@@ -32,17 +29,14 @@
                 </div>
                 <button id="cast-btn" class="magic-btn">HOLD TO GAZE</button>
             </div>
-
             <div id="cast-results" class="hidden"></div>
-            
             <div id="save-area" class="hidden">
                 <textarea id="cast-notes" placeholder="Your interpretation..."></textarea>
                 <button onclick="saveCast()" class="secondary-btn">Log This Cast</button>
             </div>
-
             <div class="history-container">
                 <h3>— Echoes —</h3>
-                <input type="text" id="search-bar" placeholder="Search (e.g., 'Finance')..." onkeyup="filterHistory()">
+                <input type="text" id="search-bar" placeholder="Search..." onkeyup="filterHistory()">
                 <div id="cast-history-list"></div>
             </div>
         </section>
@@ -50,9 +44,7 @@
 
         <section id="wight-section" class="hidden-section">
             <header><h1>Wight Watcher</h1></header>
-            
             <button onclick="toggleForm('wight-form')" class="add-btn">+ New Entity</button>
-            
             <div id="wight-form" class="hidden-form">
                 <input type="text" id="wight-name" placeholder="Name / Epithet">
                 <select id="wight-class">
@@ -61,26 +53,22 @@
                     <option value="Ancestor">Ancestor</option>
                     <option value="Fae">Fae (Court)</option>
                     <option value="Unseelie">Unseelie/Shadow</option>
+                    <option value="Deity">Deity</option>
                 </select>
                 <input type="text" id="wight-loc" placeholder="Location">
-                <input type="text" id="wight-likes" placeholder="Likes (+Honey, +Silver)">
-                <input type="text" id="wight-dislikes" placeholder="Dislikes (-Iron, -Salt)">
-                
-                <div style="margin-top:15px; margin-bottom:15px;">
+                <input type="text" id="wight-likes" placeholder="Likes">
+                <input type="text" id="wight-dislikes" placeholder="Dislikes">
+                <div style="margin:15px 0;">
                     <label>Current Standing: <strong id="standing-text" style="color:#38bdf8">Neutral</strong></label>
                     <div class="slider-container">
                         <input type="range" id="wight-standing" min="0" max="100" value="50" oninput="updateStandingLabel(this.value)">
                         <div class="slider-labels">
-                            <span>Hostile</span>
-                            <span>Neutral</span>
-                            <span>Ally</span>
+                            <span>Hostile</span><span>Neutral</span><span>Ally</span>
                         </div>
                     </div>
                 </div>
-
                 <button onclick="saveWight()" class="secondary-btn">Save Entity</button>
             </div>
-
             <div id="wight-list"></div>
         </section>
 
@@ -88,6 +76,13 @@
         <section id="ledger-section" class="hidden-section">
             <header><h1>The Ledger</h1></header>
             <p class="subtitle" id="balance-status">Checking balance...</p>
+
+            <div class="recipient-box">
+                <label>To Whom?</label>
+                <input type="text" id="offering-target" list="wight-suggestions" placeholder="e.g. Odin, House Wight...">
+                <datalist id="wight-suggestions">
+                    </datalist>
+            </div>
 
             <div class="quick-actions">
                 <button onclick="logOffering('Water')" class="offering-btn">💧 Water</button>
@@ -105,15 +100,17 @@
         </section>
 
 
-        <section id="bindrune-section" class="hidden-section">
-            <header><h1>Bindrunes</h1></header>
-            <div class="canvas-wrapper">
-                <canvas id="rune-canvas"></canvas>
+        <section id="oath-section" class="hidden-section">
+            <header><h1>The Oath Ring</h1></header>
+            <p class="subtitle">Words have weight.</p>
+            
+            <div class="oath-input-area">
+                <textarea id="oath-text" placeholder="I promise to..."></textarea>
+                <input type="text" id="oath-witness" placeholder="Witness (Entity/God)">
+                <button onclick="saveOath()" class="magic-btn" style="border-color:#fbbf24; color:#fbbf24;">SWEAR OATH</button>
             </div>
-            <div class="canvas-controls">
-                <button onclick="clearCanvas()" class="text-btn">Clear</button>
-                <button onclick="saveCanvas()" class="secondary-btn">Save Image</button>
-            </div>
+
+            <div id="oath-list"></div>
         </section>
 
     </main>
@@ -122,11 +119,10 @@
         <button class="nav-btn active" onclick="switchTab('well-section')">🔮 Well</button>
         <button class="nav-btn" onclick="switchTab('wight-section')">🌿 Wights</button>
         <button class="nav-btn" onclick="switchTab('ledger-section')">⚖️ Ledger</button>
-        <button class="nav-btn" onclick="switchTab('bindrune-section')">✒️ Draw</button>
+        <button class="nav-btn" onclick="switchTab('oath-section')">💍 Oaths</button>
     </nav>
 
     <script src="runes.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
-
