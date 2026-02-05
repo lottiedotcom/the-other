@@ -65,8 +65,19 @@
                 <input type="text" id="wight-loc" placeholder="Location">
                 <input type="text" id="wight-likes" placeholder="Likes (+Honey, +Silver)">
                 <input type="text" id="wight-dislikes" placeholder="Dislikes (-Iron, -Salt)">
-                <label>Current Standing:</label>
-                <input type="range" id="wight-standing" min="0" max="100" value="50">
+                
+                <div style="margin-top:15px; margin-bottom:15px;">
+                    <label>Current Standing: <strong id="standing-text" style="color:#38bdf8">Neutral</strong></label>
+                    <div class="slider-container">
+                        <input type="range" id="wight-standing" min="0" max="100" value="50" oninput="updateStandingLabel(this.value)">
+                        <div class="slider-labels">
+                            <span>Hostile</span>
+                            <span>Neutral</span>
+                            <span>Ally</span>
+                        </div>
+                    </div>
+                </div>
+
                 <button onclick="saveWight()" class="secondary-btn">Save Entity</button>
             </div>
 
@@ -118,3 +129,4 @@
     <script src="app.js"></script>
 </body>
 </html>
+
