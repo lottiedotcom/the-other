@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hollow</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <main>
+        
+        <section id="well-section" class="active-section">
+            <header>
+                <h1>The Well</h1>
+                <p class="subtitle">Cast into the depths</p>
+            </header>
+
+            <div class="controls">
+                <label class="toggle-container">
+                    <input type="checkbox" id="reversal-toggle">
+                    <span class="slider"></span>
+                    <span class="label-text">Allow Reversals</span>
+                </label>
+            </div>
+
+            <div id="rune-display-area" class="rune-card hidden">
+                <div class="rune-symbol" id="rune-symbol"></div>
+                <h2 id="rune-name"></h2>
+                <p id="rune-meaning" class="rune-meaning"></p>
+                <div class="rune-desc-box">
+                    <p id="rune-desc"></p>
+                </div>
+            </div>
+
+            <button id="cast-btn" class="magic-btn">HOLD TO FOCUS</button>
+        </section>
+
+        <section id="omen-section" class="hidden-section">
+            <header>
+                <h1>Omen Archive</h1>
+                <p class="subtitle">Track the signs</p>
+            </header>
+
+            <div class="input-group">
+                <input type="text" id="omen-what" placeholder="What did you see?" autocomplete="off">
+                <textarea id="omen-meaning" placeholder="Interpretation or Feeling..."></textarea>
+                <button id="save-omen-btn" class="secondary-btn">Log Omen</button>
+            </div>
+
+            <div id="omen-list" class="omen-feed">
+                </div>
+        </section>
+
+    </main>
+
+    <nav class="navbar">
+        <button class="nav-btn active" onclick="switchTab('well-section')">🔮 The Well</button>
+        <button class="nav-btn" onclick="switchTab('omen-section')">👁️ Omens</button>
+    </nav>
+
+    <script src="runes.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
