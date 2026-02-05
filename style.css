@@ -1,3 +1,4 @@
+/* Keep your existing ROOT variables */
 :root {
     --bg-color: #0b1016;
     --text-color: #e0f2fe;
@@ -5,6 +6,7 @@
     --card-bg: rgba(22, 34, 48, 0.8);
     --danger: #ef4444;
     --friendly: #22c55e;
+    --gold: #fbbf24;
     --font-header: 'Cinzel', serif;
     --font-body: 'Lato', sans-serif;
 }
@@ -19,15 +21,12 @@ body {
     transition: filter 1s ease;
 }
 
-/* THE DIMMING EFFECT */
 .dimmed-world { filter: grayscale(80%) brightness(60%); }
-
 main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 90px; }
-
 h1, h3 { font-family: var(--font-header); text-align: center; color: var(--accent-glow); margin-bottom: 5px; }
 .subtitle { text-align: center; color: #94a3b8; font-size: 0.8rem; margin-top: 0; font-style: italic; }
 
-/* INPUTS & CONTROLS */
+/* INPUTS */
 input, select, textarea {
     width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #334155;
     padding: 12px; color: white; border-radius: 8px; margin-bottom: 10px;
@@ -48,9 +47,15 @@ input:focus, textarea:focus { outline: none; border-color: var(--accent-glow); }
     padding: 10px; width: 100%; border-radius: 8px; cursor: pointer;
 }
 .add-btn { width: 100%; background: rgba(56,189,248,0.1); border: 1px dashed var(--accent-glow); color: var(--accent-glow); padding: 10px; border-radius: 8px; margin-bottom: 15px;}
-.text-btn { background: none; border: none; color: #94a3b8; text-decoration: underline; }
 
-/* RUNE GRID & RESULTS */
+/* CARDS */
+.history-item, .wight-card, .ledger-item {
+    background: rgba(255,255,255,0.05); border-left: 3px solid #334155;
+    padding: 12px; margin-bottom: 8px; border-radius: 0 8px 8px 0; font-size: 0.9rem;
+}
+.ledger-item strong { color: var(--accent-glow); }
+
+/* RUNE CARDS */
 #cast-results { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0; }
 .rune-result-card {
     background: var(--card-bg); border: 1px solid #334155; border-radius: 10px;
@@ -58,35 +63,35 @@ input:focus, textarea:focus { outline: none; border-color: var(--accent-glow); }
 }
 .rune-glyph { font-size: 40px; color: var(--accent-glow); display: block; margin-bottom: 5px; }
 
-/* CARDS (History, Wights, Ledger) */
-.history-item, .wight-card, .ledger-item {
-    background: rgba(255,255,255,0.05); border-left: 3px solid #334155;
-    padding: 12px; margin-bottom: 8px; border-radius: 0 8px 8px 0; font-size: 0.9rem;
-}
+/* WIGHTS */
 .wight-card h4 { margin: 0 0 5px 0; color: #f1f5f9; }
 .tags { font-size: 0.75rem; color: #94a3b8; }
 .status-bar { height: 4px; background: #334155; margin-top: 8px; border-radius: 2px; overflow: hidden; }
 .status-fill { height: 100%; background: var(--accent-glow); }
-
-/* SLIDER FIXES */
 .slider-container { margin-bottom: 15px; }
 .slider-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: #64748b; margin-top: -5px; }
 
-/* LEDGER GRID */
+/* LEDGER UPDATES */
+.recipient-box { margin-bottom: 15px; }
+.recipient-box label { font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; display: block;}
 .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
 .offering-btn { background: #1e293b; border: 1px solid #334155; padding: 15px; color: white; border-radius: 8px; }
 
-/* CANVAS (FIXED) */
-.canvas-wrapper { background: #fff; border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
-#rune-canvas { 
-    background-color: #ffffff; /* Explicit white background */
-    width: 100%; 
-    height: 300px; 
-    touch-action: none; /* Prevents scrolling while drawing */
+/* OATH RING */
+.oath-card {
+    border: 1px solid var(--gold);
+    background: rgba(251, 191, 36, 0.05);
+    padding: 15px; margin-bottom: 15px; border-radius: 4px;
+    position: relative;
 }
-.canvas-controls { display: flex; justify-content: space-between; }
+.oath-text { font-family: var(--font-header); font-size: 1.1rem; color: #fef3c7; margin-bottom: 10px; display: block; }
+.oath-witness { color: var(--gold); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+.fulfill-btn {
+    background: transparent; border: 1px solid var(--friendly); color: var(--friendly);
+    padding: 5px 10px; border-radius: 4px; float: right; font-size: 0.8rem; cursor: pointer;
+}
 
-/* UTILS & ANIMATION */
+/* UTILS */
 .hidden { display: none; }
 .hidden-section { display: none; }
 .hidden-form { display: none; }
@@ -102,3 +107,4 @@ input:focus, textarea:focus { outline: none; border-color: var(--accent-glow); }
 }
 .nav-btn { background: none; border: none; color: #64748b; font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; gap: 4px;}
 .nav-btn.active { color: var(--accent-glow); }
+
