@@ -1,5 +1,6 @@
 // --- INITIALIZATION ---
 window.onload = function() {
+    updateCelestialClock();
     loadHistory();
     loadWights();
     loadLedger();
@@ -12,13 +13,51 @@ window.onload = function() {
 function switchTab(sectionId) {
     document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden-section'));
-    
     const active = document.getElementById(sectionId);
     active.classList.remove('hidden-section');
     active.classList.add('active-section');
-
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     event.currentTarget.classList.add('active');
+}
+
+// ==========================================
+// 0. CELESTIAL CLOCK (Moon & Seasons)
+// ==========================================
+function updateCelestialClock() {
+    const now = new Date();
+    
+    // Season Logic
+    const month = now.getMonth(); 
+    let season = "Unknown";
+    if (month === 11 || month === 0) season = "Deep Winter";
+    else if (month === 1 || month === 2) season = "The Thaw";
+    else if (month === 3 || month === 4) season = "High Spring";
+    else if (month === 5 || month === 6) season = "Sun Height";
+    else if (month === 7 || month === 8) season = "Harvest";
+    else if (month === 9 || month === 10) season = "The Dying";
+
+    document.getElementById('season-text').innerText = season;
+
+    // Moon Phase Logic (Approx)
+    const knownNewMoon = new Date('2024-01-11T11:57:00'); 
+    const cycleLength = 29.53059;
+    const diffTime = now - knownNewMoon;
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    const currentCycleDay = diffDays % cycleLength;
+
+    let moonIcon = "🌑";
+    let moonName = "New Moon";
+    if (currentCycleDay < 1) { moonIcon = "🌑"; moonName = "New Moon"; }
+    else if (currentCycleDay < 7) { moonIcon = "🌒"; moonName = "Waxing Crescent"; }
+    else if (currentCycleDay < 9) { moonIcon = "🌓"; moonName = "First Quarter"; }
+    else if (currentCycleDay < 14) { moonIcon = "🌔"; moonName = "Waxing Gibbous"; }
+    else if (currentCycleDay < 16) { moonIcon = "🌕"; moonName = "Full Moon"; }
+    else if (currentCycleDay < 21) { moonIcon = "🌖"; moonName = "Waning Gibbous"; }
+    else if (currentCycleDay < 23) { moonIcon = "🌗"; moonName = "Last Quarter"; }
+    else { moonIcon = "🌘"; moonName = "Waning Crescent"; }
+
+    document.getElementById('moon-icon').innerText = moonIcon;
+    document.getElementById('moon-text').innerText = moonName;
 }
 
 // ==========================================
@@ -26,14 +65,13 @@ function switchTab(sectionId) {
 // ==========================================
 const castBtn = document.getElementById('cast-btn');
 let currentCast = [];
+let castTimer;
+let isCasting = false;
 
 castBtn.addEventListener('mousedown', startCast);
 castBtn.addEventListener('touchstart', startCast);
 castBtn.addEventListener('mouseup', endCast);
 castBtn.addEventListener('touchend', endCast);
-
-let castTimer;
-let isCasting = false;
 
 function startCast(e) {
     e.preventDefault();
@@ -125,10 +163,30 @@ function filterHistory() {
 }
 
 // ==========================================
-// 2. WIGHT WATCHER (Database)
+// 2. WIGHT WATCHER (Dossier Database)
 // ==========================================
-function toggleForm(id) {
-    document.getElementById(id).classList.toggle('hidden-form');
+function openWightForm(isEdit = false) {
+    document.getElementById('wight-form').classList.remove('hidden-form');
+    document.getElementById('form-title').innerText = isEdit ? "Edit Record" : "New Entry";
+    document.getElementById('wight-list').style.display = 'none';
+    document.getElementById('wight-section').scrollTop = 0;
+}
+
+function closeWightForm() {
+    document.getElementById('wight-form').classList.add('hidden-form');
+    document.getElementById('wight-list').style.display = 'block';
+    clearWightForm();
+}
+
+function clearWightForm() {
+    document.getElementById('wight-id').value = '';
+    document.getElementById('wight-name').value = '';
+    document.getElementById('wight-loc').value = '';
+    document.getElementById('wight-likes').value = '';
+    document.getElementById('wight-dislikes').value = '';
+    document.getElementById('wight-notes').value = '';
+    document.getElementById('wight-standing').value = 50;
+    updateStandingLabel(50);
 }
 
 function updateStandingLabel(val) {
@@ -141,75 +199,121 @@ function updateStandingLabel(val) {
 }
 
 function saveWight() {
+    const id = document.getElementById('wight-id').value;
     const name = document.getElementById('wight-name').value;
-    if(!name) return;
+    if(!name) return alert("Name is required.");
 
-    const wight = {
-        id: Date.now(),
+    const wightData = {
+        id: id ? parseInt(id) : Date.now(),
         name: name,
         class: document.getElementById('wight-class').value,
         location: document.getElementById('wight-loc').value,
         likes: document.getElementById('wight-likes').value,
         dislikes: document.getElementById('wight-dislikes').value,
+        notes: document.getElementById('wight-notes').value,
         standing: document.getElementById('wight-standing').value
     };
 
     let wights = JSON.parse(localStorage.getItem('myWights')) || [];
-    wights.push(wight);
+    if (id) {
+        const index = wights.findIndex(w => w.id === parseInt(id));
+        if (index > -1) wights[index] = wightData;
+    } else {
+        wights.push(wightData);
+    }
+
     localStorage.setItem('myWights', JSON.stringify(wights));
-    
-    toggleForm('wight-form');
+    closeWightForm();
     loadWights();
-    populateWightSuggestions(); // Refresh autocomplete
+    populateWightSuggestions();
+}
+
+function editWight(id) {
+    let wights = JSON.parse(localStorage.getItem('myWights')) || [];
+    const w = wights.find(item => item.id === id);
+    if (!w) return;
+    document.getElementById('wight-id').value = w.id;
+    document.getElementById('wight-name').value = w.name;
+    document.getElementById('wight-class').value = w.class;
+    document.getElementById('wight-loc').value = w.location;
+    document.getElementById('wight-likes').value = w.likes;
+    document.getElementById('wight-dislikes').value = w.dislikes;
+    document.getElementById('wight-notes').value = w.notes || ''; 
+    document.getElementById('wight-standing').value = w.standing;
+    updateStandingLabel(w.standing);
+    openWightForm(true);
+}
+
+function deleteWight(id) {
+    if(!confirm("Banish this record?")) return;
+    let wights = JSON.parse(localStorage.getItem('myWights')) || [];
+    wights = wights.filter(w => w.id !== id);
+    localStorage.setItem('myWights', JSON.stringify(wights));
+    loadWights();
+    populateWightSuggestions();
 }
 
 function loadWights() {
     const list = document.getElementById('wight-list');
     const wights = JSON.parse(localStorage.getItem('myWights')) || [];
+    const filter = document.getElementById('wight-search').value.toLowerCase();
     
-    list.innerHTML = wights.map(w => {
-        let color = w.standing > 75 ? 'var(--friendly)' : (w.standing < 25 ? 'var(--danger)' : '#38bdf8');
-        return `
-        <div class="wight-card" style="border-left-color: ${color}">
-            <h4>${w.name} <small>(${w.class})</small></h4>
-            <div class="tags">📍 ${w.location}</div>
-            <div class="tags">❤️ ${w.likes} | 🚫 ${w.dislikes}</div>
-            <div class="status-bar"><div class="status-fill" style="width:${w.standing}%; background:${color}"></div></div>
-        </div>
-    `}).join('');
+    wights.sort((a, b) => a.name.localeCompare(b.name));
+
+    list.innerHTML = wights
+        .filter(w => w.name.toLowerCase().includes(filter) || w.class.toLowerCase().includes(filter))
+        .map(w => {
+            let color = w.standing > 75 ? 'var(--friendly)' : (w.standing < 25 ? 'var(--danger)' : '#38bdf8');
+            return `
+            <div class="wight-card" style="border-left-color: ${color}">
+                <div class="wight-header">
+                    <h4>${w.name}</h4>
+                    <span class="wight-type">${w.class}</span>
+                </div>
+                <div class="wight-details">
+                    ${w.location ? `📍 ${w.location}<br>` : ''}
+                    ${w.likes ? `❤️ ${w.likes}` : ''} ${w.dislikes ? ` | 🚫 ${w.dislikes}` : ''}
+                </div>
+                ${w.notes ? `<div class="wight-gnosis">"${w.notes}"</div>` : ''}
+                <div class="status-bar" style="background:rgba(255,255,255,0.1)">
+                    <div class="status-fill" style="width:${w.standing}%; background:${color}"></div>
+                </div>
+                <div class="card-actions">
+                    <button class="action-btn edit-btn" onclick="editWight(${w.id})">EDIT</button>
+                    <button class="action-btn banish-btn" onclick="deleteWight(${w.id})">BANISH</button>
+                </div>
+            </div>
+        `}).join('');
 }
+
+function filterWights() { loadWights(); }
 
 function populateWightSuggestions() {
     const wights = JSON.parse(localStorage.getItem('myWights')) || [];
     const datalist = document.getElementById('wight-suggestions');
-    datalist.innerHTML = wights.map(w => `<option value="${w.name}">`).join('');
+    if(datalist) datalist.innerHTML = wights.map(w => `<option value="${w.name}">`).join('');
 }
 
 // ==========================================
-// 3. THE LEDGER (Offering Log)
+// 3. THE LEDGER (Offerings)
 // ==========================================
 function logOffering(type) {
     const target = document.getElementById('offering-target').value || "Unknown";
     const entry = { date: new Date().toLocaleString(), type: type, target: target };
-    saveLedgerEntry(entry);
-}
-
-function logCustomOffering() {
-    const type = document.getElementById('custom-offering').value;
-    if(type) logOffering(type);
-}
-
-function saveLedgerEntry(entry) {
+    
     let ledger = JSON.parse(localStorage.getItem('myLedger')) || [];
     ledger.unshift(entry);
     localStorage.setItem('myLedger', JSON.stringify(ledger));
     localStorage.setItem('lastOffering', Date.now());
     
-    // Clear custom input but KEEP the target input (often you give multiple things to same entity)
     document.getElementById('custom-offering').value = '';
-    
     loadLedger();
     checkBalance();
+}
+
+function logCustomOffering() {
+    const type = document.getElementById('custom-offering').value;
+    if(type) logOffering(type);
 }
 
 function loadLedger() {
@@ -227,7 +331,6 @@ function loadLedger() {
 function checkBalance() {
     const last = localStorage.getItem('lastOffering');
     const statusEl = document.getElementById('balance-status');
-    
     if(!last) { statusEl.innerText = "No offerings recorded."; return; }
 
     const diff = Date.now() - parseInt(last);
@@ -245,20 +348,14 @@ function checkBalance() {
 }
 
 // ==========================================
-// 4. THE OATH RING (New Module)
+// 4. THE OATH RING
 // ==========================================
 function saveOath() {
     const text = document.getElementById('oath-text').value;
     const witness = document.getElementById('oath-witness').value;
     if(!text) return;
-
-    const oath = {
-        id: Date.now(),
-        text: text,
-        witness: witness || "The Void",
-        status: "active"
-    };
-
+    const oath = { id: Date.now(), text: text, witness: witness || "The Void", status: "active" };
+    
     let oaths = JSON.parse(localStorage.getItem('myOaths')) || [];
     oaths.push(oath);
     localStorage.setItem('myOaths', JSON.stringify(oaths));
@@ -271,13 +368,10 @@ function saveOath() {
 function loadOaths() {
     const list = document.getElementById('oath-list');
     let oaths = JSON.parse(localStorage.getItem('myOaths')) || [];
-    
-    // Show active oaths first
     oaths.sort((a,b) => (a.status === 'active' ? -1 : 1));
 
     list.innerHTML = oaths.map(o => {
-        if(o.status === 'fulfilled') return ''; // Optional: Don't show fulfilled oaths to keep list clean
-        
+        if(o.status === 'fulfilled') return ''; 
         return `
         <div class="oath-card">
             <button class="fulfill-btn" onclick="fulfillOath(${o.id})">✔ Fulfill</button>
@@ -289,7 +383,6 @@ function loadOaths() {
 
 function fulfillOath(id) {
     if(!confirm("Have you truly fulfilled this oath?")) return;
-    
     let oaths = JSON.parse(localStorage.getItem('myOaths')) || [];
     const index = oaths.findIndex(o => o.id === id);
     if(index > -1) {
